@@ -61,8 +61,9 @@ On startup the server:
 
 1. Open [http://127.0.0.1:3000](http://127.0.0.1:3000) — the contacts list (empty until you add some).
 2. Click **New contact**, enter a name (required), optional email and phone, then **Save contact**.
-3. You are returned to the list; new contacts are stored in the Postgres `customer` table.
-4. Use the Name / Email / Phone column filters to search.
+3. You are returned to the list; each contact is a card with a contact-info status icon (green = email and phone, yellow = one, grey = neither).
+4. Click a contact to open their detail page (email, phone, and a notes placeholder).
+5. Use the name filter on the list to search.
 
 ### Stop the database
 

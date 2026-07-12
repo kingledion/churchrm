@@ -16,11 +16,7 @@ fn ilike_pattern(query: &str) -> String {
 }
 
 #[server(ListContacts, "/api")]
-pub async fn list_contacts(
-    name_query: String,
-    email_query: String,
-    phone_query: String,
-) -> Result<Vec<Contact>, ServerFnError> {
+pub async fn list_contacts(name_query: String) -> Result<Vec<Contact>, ServerFnError> {
     let state = expect_context::<AppState>();
 
     let contacts = sqlx::query_as::<_, Contact>(
@@ -28,19 +24,35 @@ pub async fn list_contacts(
         SELECT id, name, phone, email
         FROM customer
         WHERE name ILIKE $1 ESCAPE '\'
-          AND email ILIKE $2 ESCAPE '\'
-          AND phone ILIKE $3 ESCAPE '\'
         ORDER BY name
         "#,
     )
     .bind(ilike_pattern(&name_query))
-    .bind(ilike_pattern(&email_query))
-    .bind(ilike_pattern(&phone_query))
     .fetch_all(&state.pool)
     .await
     .map_err(|err| ServerFnError::new(err.to_string()))?;
 
     Ok(contacts)
+}
+
+#[server(GetContact, "/api")]
+pub async fn get_contact(id: uuid::Uuid) -> Result<Contact, ServerFnError> {
+    let state = expect_context::<AppState>();
+
+    let contact = sqlx::query_as::<_, Contact>(
+        r#"
+        SELECT id, name, phone, email
+        FROM customer
+        WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|err| ServerFnError::new(err.to_string()))?
+    .ok_or_else(|| ServerFnError::new("Contact not found"))?;
+
+    Ok(contact)
 }
 
 #[server(CreateContact, "/api")]

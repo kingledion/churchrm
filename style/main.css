@@ -14,6 +14,9 @@
   --primary: #2f5d9e;
   --primary-hover: #244a7d;
   --danger: #b42318;
+  --status-complete: #2f9e44;
+  --status-partial: #c9a227;
+  --status-empty: #9aa5b5;
   --shadow: 0 8px 24px rgba(26, 35, 50, 0.08);
   --radius: 12px;
   --font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -121,60 +124,147 @@ body {
   cursor: not-allowed;
 }
 
-.table-scroll {
+.contact-list-toolbar {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.name-filter {
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.contacts-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 640px;
-}
-
-.contacts-table th,
-.contacts-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  vertical-align: top;
-}
-
-.contacts-table th {
-  background: #f8fafc;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.column-header-input {
-  width: 100%;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--text);
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   font: inherit;
-  font-weight: 700;
-  text-align: left;
-  padding: 0;
-  min-height: 2rem;
-  cursor: text;
-}
-
-.column-header-input::placeholder {
-  color: var(--text);
-  opacity: 1;
-}
-
-.column-header-input:hover {
-  border-bottom-color: var(--border);
-}
-
-.column-header-input:focus {
-  outline: none;
-  border-bottom-color: var(--primary);
   background: #fff;
+  color: var(--text);
+}
+
+.name-filter:focus {
+  outline: 2px solid rgba(47, 93, 158, 0.25);
+  border-color: var(--primary);
+}
+
+.contact-card-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #dce5f0;
+  border: 1px solid #b7c5d8;
+}
+
+.contact-card {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  border: 2px solid #7f94b0;
+  border-radius: 8px;
+  background: #f8fafc;
+  box-shadow: 0 2px 4px rgba(26, 35, 50, 0.12);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.contact-card:hover {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(26, 35, 50, 0.16);
+}
+
+.contact-card__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  padding: 0.5em 0.75em;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: inherit;
+}
+
+.contact-card__link:focus-visible {
+  outline: 2px solid rgba(47, 93, 158, 0.45);
+  outline-offset: 2px;
+}
+
+.contact-card__name {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.contact-card__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  flex-shrink: 0;
+}
+
+.contact-status {
+  width: 1em;
+  height: 1em;
+  display: block;
+  flex-shrink: 0;
+}
+
+.contact-status path {
+  fill: currentColor;
+}
+
+.contact-status--complete {
+  color: var(--status-complete);
+}
+
+.contact-status--partial {
+  color: var(--status-partial);
+}
+
+.contact-status--empty {
+  color: var(--status-empty);
+}
+
+.contact-detail {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.contact-detail__row {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.contact-detail__row dt {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.contact-detail__row dd {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.contact-detail__link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.contact-detail__link:hover {
+  text-decoration: underline;
+}
+
+.contact-notes {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.contact-notes__heading {
+  margin: 0 0 0.375rem;
+  font-size: 1rem;
 }
 
 .empty-state {
@@ -249,39 +339,4 @@ body {
   .app-main {
     padding: 0.875rem;
   }
-
-  .contacts-table {
-    min-width: 0;
-  }
-
-  .contacts-table tbody tr {
-    display: block;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    background: #fff;
-  }
-
-  .contacts-table tbody td {
-    display: grid;
-    grid-template-columns: 5.5rem 1fr;
-    gap: 0.5rem;
-    border-bottom: none;
-    padding: 0.5rem 0;
-  }
-
-  .contacts-table tbody td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: var(--muted);
-    font-size: 0.85rem;
-  }
-
-  .contacts-table .empty-state {
-    display: block;
-    border: none;
-    padding: 1.5rem 0.5rem;
-  }
-
 }

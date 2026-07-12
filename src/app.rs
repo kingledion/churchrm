@@ -2,12 +2,13 @@ use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
 use leptos_router::{
     components::{A, Route, Router, Routes},
-    hooks::use_navigate,
-    StaticSegment,
+    hooks::{use_navigate, use_params_map},
+    ParamSegment, StaticSegment,
 };
+use uuid::Uuid;
 
 use crate::models::Contact;
-use crate::server::{create_contact, list_contacts};
+use crate::server::{create_contact, get_contact, list_contacts};
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
@@ -44,6 +45,10 @@ pub fn App() -> impl IntoView {
                     <Routes fallback=NotFound>
                         <Route path=StaticSegment("") view=HomePage/>
                         <Route path=StaticSegment("new") view=NewContactPage/>
+                        <Route
+                            path=(StaticSegment("contacts"), ParamSegment("id"))
+                            view=ContactDetailPage
+                        />
                     </Routes>
                 </main>
             </div>
@@ -51,66 +56,70 @@ pub fn App() -> impl IntoView {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ContactInfoStatus {
+    Both,
+    Partial,
+    None,
+}
+
+impl ContactInfoStatus {
+    fn from_contact(contact: &Contact) -> Self {
+        match (!contact.email.is_empty(), !contact.phone.is_empty()) {
+            (true, true) => Self::Both,
+            (true, false) | (false, true) => Self::Partial,
+            (false, false) => Self::None,
+        }
+    }
+
+    fn class(self) -> &'static str {
+        match self {
+            Self::Both => "contact-status contact-status--complete",
+            Self::Partial => "contact-status contact-status--partial",
+            Self::None => "contact-status contact-status--empty",
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Both => "Has email and phone",
+            Self::Partial => "Has partial contact info",
+            Self::None => "No contact info",
+        }
+    }
+}
+
 #[component]
 fn HomePage() -> impl IntoView {
     let name_query = RwSignal::new(String::new());
-    let email_query = RwSignal::new(String::new());
-    let phone_query = RwSignal::new(String::new());
 
     let contacts = Resource::new(
-        move || (name_query.get(), email_query.get(), phone_query.get()),
-        |(name, email, phone)| async move {
-            list_contacts(name, email, phone)
-                .await
-                .unwrap_or_default()
-        },
+        move || name_query.get(),
+        |name| async move { list_contacts(name).await.unwrap_or_default() },
     );
 
     view! {
         <section class="page">
             <div class="page-toolbar">
-                <h2 class="page-heading">"Contacts"</h2>
+                <div class="contact-list-toolbar">
+                    <label class="sr-only" for="filter-name">"Filter by name"</label>
+                    <input
+                        id="filter-name"
+                        class="name-filter"
+                        type="search"
+                        placeholder="Filter by name"
+                        prop:value=move || name_query.get()
+                        on:input=move |ev| name_query.set(event_target_value(&ev))
+                    />
+                </div>
                 <A href="/new" attr:class="button button-primary">"New contact"</A>
             </div>
 
-            <div class="table-scroll">
-                <table class="contacts-table">
-                    <thead>
-                        <tr class="contacts-table__header-row">
-                            <th>
-                                <ColumnHeaderInput
-                                    id="filter-name"
-                                    label="Name"
-                                    query=name_query
-                                />
-                            </th>
-                            <th>
-                                <ColumnHeaderInput
-                                    id="filter-email"
-                                    label="Email"
-                                    query=email_query
-                                />
-                            </th>
-                            <th>
-                                <ColumnHeaderInput
-                                    id="filter-phone"
-                                    label="Phone"
-                                    query=phone_query
-                                />
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <Transition fallback=|| view! { <ContactRows contacts=Vec::new() loading=true/> }>
-                            {move || {
-                                contacts
-                                    .get()
-                                    .map(|rows| view! { <ContactRows contacts=rows/> })
-                            }}
-                        </Transition>
-                    </tbody>
-                </table>
-            </div>
+            <Transition fallback=|| view! { <p class="empty-state">"Loading contacts..."</p> }>
+                {move || {
+                    contacts.get().map(|rows| view! { <ContactCardList contacts=rows/> })
+                }}
+            </Transition>
 
             <Suspense fallback=|| ()>
                 {move || {
@@ -130,65 +139,149 @@ fn HomePage() -> impl IntoView {
 }
 
 #[component]
-fn ColumnHeaderInput(id: &'static str, label: &'static str, query: RwSignal<String>) -> impl IntoView {
+fn ContactCardList(contacts: Vec<Contact>) -> impl IntoView {
+    if contacts.is_empty() {
+        return view! {
+            <p class="empty-state">"No contacts match your search."</p>
+        }
+        .into_any();
+    }
+
     view! {
-        <label class="sr-only" for=id>{label}</label>
-        <input
-            id=id
-            class="column-header-input"
-            type="text"
-            placeholder=label
-            prop:value=move || query.get()
-            on:input=move |ev| query.set(event_target_value(&ev))
-        />
+        <div class="contact-card-list">
+            {contacts
+                .into_iter()
+                .map(|contact| {
+                    let href = format!("/contacts/{}", contact.id);
+                    let status = ContactInfoStatus::from_contact(&contact);
+                    view! {
+                        <div class="contact-card">
+                            <A href=href attr:class="contact-card__link">
+                                <span class="contact-card__name">{contact.name}</span>
+                                <span class="contact-card__icons">
+                                    <ContactInfoIcon status=status/>
+                                </span>
+                            </A>
+                        </div>
+                    }
+                })
+                .collect_view()}
+        </div>
+    }
+    .into_any()
+}
+
+#[component]
+fn ContactInfoIcon(status: ContactInfoStatus) -> impl IntoView {
+    view! {
+        <svg
+            class=status.class()
+            viewBox="0 0 24 24"
+            width="1em"
+            height="1em"
+            aria-label=status.label()
+            role="img"
+            focusable="false"
+        >
+            <title>{status.label()}</title>
+            <path
+                fill="currentColor"
+                d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"
+            />
+        </svg>
     }
 }
 
 #[component]
-fn ContactRows(contacts: Vec<Contact>, #[prop(optional)] loading: bool) -> impl IntoView {
-    if loading {
-        return view! {
-            <tr>
-                <td colspan="3" class="empty-state">"Loading contacts..."</td>
-            </tr>
-        }
-        .into_any();
-    }
-
-    if contacts.is_empty() {
-        return view! {
-            <tr>
-                <td colspan="3" class="empty-state">"No contacts match your search."</td>
-            </tr>
-        }
-        .into_any();
-    }
-
-    contacts
-        .into_iter()
-        .map(|contact| {
-            view! {
-                <tr>
-                    <td data-label="Name">{contact.name}</td>
-                    <td data-label="Email">
-                        {if contact.email.is_empty() {
-                            view! { <span class="muted">"—"</span> }.into_any()
-                        } else {
-                            view! { {contact.email} }.into_any()
-                        }}
-                    </td>
-                    <td data-label="Phone">
-                        {if contact.phone.is_empty() {
-                            view! { <span class="muted">"—"</span> }.into_any()
-                        } else {
-                            view! { {contact.phone} }.into_any()
-                        }}
-                    </td>
-                </tr>
+fn ContactDetailPage() -> impl IntoView {
+    let params = use_params_map();
+    let contact = Resource::new(
+        move || {
+            params
+                .read()
+                .get("id")
+                .and_then(|id| Uuid::parse_str(&id).ok())
+        },
+        |id| async move {
+            match id {
+                Some(id) => get_contact(id).await.map(Some),
+                None => Ok(None),
             }
-        })
-        .collect_view()
-        .into_any()
+        },
+    );
+
+    view! {
+        <section class="page">
+            <Transition fallback=|| view! { <p class="empty-state">"Loading contact..."</p> }>
+                {move || {
+                    match contact.get() {
+                        None => None,
+                        Some(Ok(Some(contact))) => Some(view! {
+                            <ContactDetail contact=contact/>
+                        }.into_any()),
+                        Some(Ok(None)) | Some(Err(_)) => Some(view! {
+                            <div class="page-toolbar">
+                                <h2 class="page-heading">"Contact not found"</h2>
+                                <A href="/" attr:class="button button-secondary">"Back"</A>
+                            </div>
+                            <p class="empty-state">"That contact does not exist."</p>
+                        }.into_any()),
+                    }
+                }}
+            </Transition>
+        </section>
+    }
+}
+
+#[component]
+fn ContactDetail(contact: Contact) -> impl IntoView {
+    let email = contact.email.clone();
+    let phone = contact.phone.clone();
+
+    view! {
+        <div class="page-toolbar">
+            <h2 class="page-heading">{contact.name}</h2>
+            <A href="/" attr:class="button button-secondary">"Back"</A>
+        </div>
+
+        <dl class="contact-detail">
+            <div class="contact-detail__row">
+                <dt>"Email"</dt>
+                <dd>
+                    {if email.is_empty() {
+                        view! { <span class="muted">"Not provided"</span> }.into_any()
+                    } else {
+                        view! {
+                            <a class="contact-detail__link" href=format!("mailto:{email}")>
+                                {email.clone()}
+                            </a>
+                        }
+                        .into_any()
+                    }}
+                </dd>
+            </div>
+            <div class="contact-detail__row">
+                <dt>"Phone"</dt>
+                <dd>
+                    {if phone.is_empty() {
+                        view! { <span class="muted">"Not provided"</span> }.into_any()
+                    } else {
+                        view! {
+                            <a class="contact-detail__link" href=format!("tel:{phone}")>
+                                {phone.clone()}
+                            </a>
+                        }
+                        .into_any()
+                    }}
+                </dd>
+            </div>
+        </dl>
+
+        <section class="contact-notes">
+            <h3 class="contact-notes__heading">"Notes"</h3>
+            <p class="muted">"Notes will appear here in a future update."</p>
+        </section>
+    }
 }
 
 #[component]
