@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "ssr", derive(sqlx::FromRow))]
 pub struct Contact {
     pub id: Uuid,
     pub name: String,

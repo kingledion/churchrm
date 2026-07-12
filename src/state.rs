@@ -1,22 +1,12 @@
-use std::sync::{Arc, RwLock};
-
-use crate::models::Contact;
+use sqlx::PgPool;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub contacts: Arc<RwLock<Vec<Contact>>>,
+    pub pool: PgPool,
 }
 
 impl AppState {
-    pub fn new() -> Self {
-        Self {
-            contacts: Arc::new(RwLock::new(Vec::new())),
-        }
-    }
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self::new()
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
     }
 }

@@ -6,11 +6,13 @@ use crate::models::Contact;
 use crate::state::AppState;
 
 #[cfg(feature = "ssr")]
-fn matches_query(value: &str, query: &str) -> bool {
+fn ilike_pattern(query: &str) -> String {
     if query.is_empty() {
-        return true;
+        return "%".to_string();
     }
-    value.to_lowercase().contains(&query.to_lowercase())
+
+    let escaped = query.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+    format!("%{escaped}%")
 }
 
 #[server(ListContacts, "/api")]
@@ -20,22 +22,25 @@ pub async fn list_contacts(
     phone_query: String,
 ) -> Result<Vec<Contact>, ServerFnError> {
     let state = expect_context::<AppState>();
-    let contacts = state
-        .contacts
-        .read()
-        .map_err(|_| ServerFnError::new("Failed to read contacts"))?;
 
-    let filtered = contacts
-        .iter()
-        .filter(|contact| {
-            matches_query(&contact.name, &name_query)
-                && matches_query(&contact.email, &email_query)
-                && matches_query(&contact.phone, &phone_query)
-        })
-        .cloned()
-        .collect();
+    let contacts = sqlx::query_as::<_, Contact>(
+        r#"
+        SELECT id, name, phone, email
+        FROM customer
+        WHERE name ILIKE $1 ESCAPE '\'
+          AND email ILIKE $2 ESCAPE '\'
+          AND phone ILIKE $3 ESCAPE '\'
+        ORDER BY name
+        "#,
+    )
+    .bind(ilike_pattern(&name_query))
+    .bind(ilike_pattern(&email_query))
+    .bind(ilike_pattern(&phone_query))
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|err| ServerFnError::new(err.to_string()))?;
 
-    Ok(filtered)
+    Ok(contacts)
 }
 
 #[server(CreateContact, "/api")]
@@ -54,11 +59,20 @@ pub async fn create_contact(
 
     let contact = Contact::new(name, phone, email);
     let state = expect_context::<AppState>();
-    let mut contacts = state
-        .contacts
-        .write()
-        .map_err(|_| ServerFnError::new("Failed to write contacts"))?;
-    contacts.push(contact.clone());
+
+    sqlx::query(
+        r#"
+        INSERT INTO customer (id, name, phone, email)
+        VALUES ($1, $2, $3, $4)
+        "#,
+    )
+    .bind(contact.id)
+    .bind(&contact.name)
+    .bind(&contact.phone)
+    .bind(&contact.email)
+    .execute(&state.pool)
+    .await
+    .map_err(|err| ServerFnError::new(err.to_string()))?;
 
     Ok(contact)
 }
