@@ -18,7 +18,7 @@ console_error_panic_hook = { version = "0.1", optional = true }
 dotenvy = { version = "0.15", optional = true }
 leptos_axum = { version = "0.8.5", optional = true }
 sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "migrate"], optional = true }
-tokio = { version = "1", features = ["rt-multi-thread"], optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "time"], optional = true }
 wasm-bindgen = { version = "0.2.106", optional = true }
 
 [features]
