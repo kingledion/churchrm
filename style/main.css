@@ -17,6 +17,9 @@
   --status-complete: #2f9e44;
   --status-partial: #c9a227;
   --status-empty: #9aa5b5;
+  --life-stage-young: #3b82a8;
+  --life-stage-has-kids: #3d8b6e;
+  --life-stage-older: #7a6a9a;
   --shadow: 0 8px 24px rgba(26, 35, 50, 0.08);
   --radius: 12px;
   --font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -88,6 +91,37 @@ body {
 .page-heading {
   margin: 0;
   font-size: 1.15rem;
+}
+
+.contact-detail__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  min-width: 0;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.contact-detail__heading .back-caret {
+  flex-shrink: 0;
+  color: var(--primary);
+  font-weight: 600;
+  line-height: inherit;
+  text-decoration: none !important;
+}
+
+.contact-detail__heading .back-caret:hover,
+.contact-detail__heading .back-caret:focus,
+.contact-detail__heading .back-caret:active,
+.contact-detail__heading .back-caret:visited {
+  color: var(--primary-hover);
+  text-decoration: none !important;
+}
+
+.contact-detail__heading .back-caret:focus-visible {
+  outline: 2px solid rgba(47, 93, 158, 0.45);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .button {
@@ -231,6 +265,95 @@ body {
   color: var(--status-empty);
 }
 
+.life-stage-icon {
+  width: 1em;
+  height: 1em;
+  display: block;
+  flex-shrink: 0;
+}
+
+.life-stage-icon--young {
+  color: var(--life-stage-young);
+}
+
+.life-stage-icon--has-kids {
+  color: var(--life-stage-has-kids);
+}
+
+.life-stage-icon--older {
+  color: var(--life-stage-older);
+}
+
+.life-stage-icon--empty {
+  color: var(--status-empty);
+}
+
+.life-stage-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.life-stage-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 4.5rem;
+  padding: 0.625rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.life-stage-option:hover {
+  border-color: #a8b6c9;
+  background: #f8fafc;
+}
+
+.life-stage-option:focus-visible {
+  outline: 2px solid rgba(47, 93, 158, 0.45);
+  outline-offset: 2px;
+}
+
+.life-stage-option__icon {
+  display: block;
+}
+
+.life-stage-option__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.life-stage-option--young.life-stage-option--selected {
+  color: var(--life-stage-young);
+  border-color: var(--life-stage-young);
+  background: rgba(59, 130, 168, 0.08);
+  box-shadow: inset 0 0 0 1px var(--life-stage-young);
+}
+
+.life-stage-option--has-kids.life-stage-option--selected {
+  color: var(--life-stage-has-kids);
+  border-color: var(--life-stage-has-kids);
+  background: rgba(61, 139, 110, 0.08);
+  box-shadow: inset 0 0 0 1px var(--life-stage-has-kids);
+}
+
+.life-stage-option--older.life-stage-option--selected {
+  color: var(--life-stage-older);
+  border-color: var(--life-stage-older);
+  background: rgba(122, 106, 154, 0.08);
+  box-shadow: inset 0 0 0 1px var(--life-stage-older);
+}
+
 .contact-detail {
   margin: 0;
   display: flex;
@@ -252,6 +375,12 @@ body {
 .contact-detail__row dd {
   margin: 0;
   font-size: 1.05rem;
+}
+
+.contact-detail__life-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
 }
 
 .contact-detail__link {
@@ -301,7 +430,8 @@ body {
   gap: 0.375rem;
 }
 
-.form-field label {
+.form-field label,
+.form-field__label {
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -312,11 +442,20 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   font: inherit;
+  background: #fff;
+  color: var(--text);
 }
 
 .form-field input:focus {
   outline: 2px solid rgba(47, 93, 158, 0.25);
   border-color: var(--primary);
+}
+
+.form-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .form-error {

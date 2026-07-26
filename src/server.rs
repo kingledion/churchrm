@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 
-use crate::models::Contact;
+use crate::models::{Contact, LifeStage};
 
 #[cfg(feature = "ssr")]
 use crate::state::AppState;
@@ -21,7 +21,7 @@ pub async fn list_contacts(name_query: String) -> Result<Vec<Contact>, ServerFnE
 
     let contacts = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, name, phone, email
+        SELECT id, name, phone, email, life_stage
         FROM customer
         WHERE name ILIKE $1 ESCAPE '\'
         ORDER BY name
@@ -41,7 +41,7 @@ pub async fn get_contact(id: uuid::Uuid) -> Result<Contact, ServerFnError> {
 
     let contact = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, name, phone, email
+        SELECT id, name, phone, email, life_stage
         FROM customer
         WHERE id = $1
         "#,
@@ -60,6 +60,7 @@ pub async fn create_contact(
     name: String,
     phone: String,
     email: String,
+    life_stage: Option<LifeStage>,
 ) -> Result<Contact, ServerFnError> {
     let name = name.trim().to_string();
     let phone = phone.trim().to_string();
@@ -69,19 +70,20 @@ pub async fn create_contact(
         return Err(ServerFnError::new("Name is required"));
     }
 
-    let contact = Contact::new(name, phone, email);
+    let contact = Contact::new(name, phone, email, life_stage);
     let state = expect_context::<AppState>();
 
     sqlx::query(
         r#"
-        INSERT INTO customer (id, name, phone, email)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO customer (id, name, phone, email, life_stage)
+        VALUES ($1, $2, $3, $4, $5)
         "#,
     )
     .bind(contact.id)
     .bind(&contact.name)
     .bind(&contact.phone)
     .bind(&contact.email)
+    .bind(contact.life_stage)
     .execute(&state.pool)
     .await
     .map_err(|err| ServerFnError::new(err.to_string()))?;
