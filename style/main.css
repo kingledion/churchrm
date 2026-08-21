@@ -17,8 +17,9 @@
   --status-complete: #2f9e44;
   --status-partial: #c9a227;
   --status-empty: #9aa5b5;
-  --life-stage-young: #3b82a8;
-  --life-stage-has-kids: #3d8b6e;
+  --life-stage-child: #6b9bb8;
+  --life-stage-young-adult: #3b82a8;
+  --life-stage-parent: #3d8b6e;
   --life-stage-older: #7a6a9a;
   --shadow: 0 8px 24px rgba(26, 35, 50, 0.08);
   --radius: 12px;
@@ -93,6 +94,13 @@ body {
   font-size: 1.15rem;
 }
 
+.contact-detail__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .contact-detail__heading {
   display: flex;
   align-items: baseline;
@@ -100,6 +108,39 @@ body {
   min-width: 0;
   line-height: 1.25;
   overflow-wrap: anywhere;
+}
+
+.contact-detail__name-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: inherit;
+}
+
+.contact-detail__name-input::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.contact-detail__name-input:focus {
+  outline: none;
+}
+
+.contact-detail__form {
+  margin-top: 0.25rem;
+}
+
+.autosave-status {
+  margin: 0;
+  min-height: 1.25em;
+  font-size: 0.9rem;
 }
 
 .contact-detail__heading .back-caret {
@@ -152,6 +193,16 @@ body {
   background: #eef2f7;
   color: var(--text);
   border-color: var(--border);
+}
+
+.button-danger {
+  background: #f8e8e6;
+  color: var(--danger);
+  border-color: #e2b4ae;
+}
+
+.button-danger:hover {
+  background: #f3d6d2;
 }
 
 .button-full {
@@ -235,11 +286,25 @@ body {
   overflow-wrap: anywhere;
 }
 
+.contact-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.contact-card__children {
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
 .contact-card__icons {
   display: inline-flex;
   align-items: center;
   gap: 0.25em;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .contact-status {
@@ -272,12 +337,16 @@ body {
   flex-shrink: 0;
 }
 
-.life-stage-icon--young {
-  color: var(--life-stage-young);
+.life-stage-icon--child {
+  color: var(--life-stage-child);
 }
 
-.life-stage-icon--has-kids {
-  color: var(--life-stage-has-kids);
+.life-stage-icon--young-adult {
+  color: var(--life-stage-young-adult);
+}
+
+.life-stage-icon--parent {
+  color: var(--life-stage-parent);
 }
 
 .life-stage-icon--older {
@@ -290,7 +359,7 @@ body {
 
 .life-stage-picker {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
@@ -301,7 +370,7 @@ body {
   justify-content: center;
   gap: 0.35rem;
   min-height: 4.5rem;
-  padding: 0.625rem 0.5rem;
+  padding: 0.625rem 0.35rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
@@ -327,24 +396,31 @@ body {
 }
 
 .life-stage-option__label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
 }
 
-.life-stage-option--young.life-stage-option--selected {
-  color: var(--life-stage-young);
-  border-color: var(--life-stage-young);
-  background: rgba(59, 130, 168, 0.08);
-  box-shadow: inset 0 0 0 1px var(--life-stage-young);
+.life-stage-option--child.life-stage-option--selected {
+  color: var(--life-stage-child);
+  border-color: var(--life-stage-child);
+  background: rgba(107, 155, 184, 0.1);
+  box-shadow: inset 0 0 0 1px var(--life-stage-child);
 }
 
-.life-stage-option--has-kids.life-stage-option--selected {
-  color: var(--life-stage-has-kids);
-  border-color: var(--life-stage-has-kids);
+.life-stage-option--young-adult.life-stage-option--selected {
+  color: var(--life-stage-young-adult);
+  border-color: var(--life-stage-young-adult);
+  background: rgba(59, 130, 168, 0.08);
+  box-shadow: inset 0 0 0 1px var(--life-stage-young-adult);
+}
+
+.life-stage-option--parent.life-stage-option--selected {
+  color: var(--life-stage-parent);
+  border-color: var(--life-stage-parent);
   background: rgba(61, 139, 110, 0.08);
-  box-shadow: inset 0 0 0 1px var(--life-stage-has-kids);
+  box-shadow: inset 0 0 0 1px var(--life-stage-parent);
 }
 
 .life-stage-option--older.life-stage-option--selected {
@@ -352,6 +428,119 @@ body {
   border-color: var(--life-stage-older);
   background: rgba(122, 106, 154, 0.08);
   box-shadow: inset 0 0 0 1px var(--life-stage-older);
+}
+
+.kind-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.kind-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+}
+
+.kind-toggle__option--selected {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(47, 93, 158, 0.08);
+  box-shadow: inset 0 0 0 1px var(--primary);
+  cursor: default;
+}
+
+.kind-toggle__option--action {
+  cursor: pointer;
+}
+
+.kind-toggle__option--action:hover {
+  border-color: #a8b6c9;
+  background: #f8fafc;
+  color: var(--text);
+}
+
+.kind-toggle__option--disabled {
+  color: #b0b8c4;
+  background: #f3f5f8;
+  border-color: #e2e7ee;
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.kind-toggle__glyph {
+  display: block;
+  flex-shrink: 0;
+}
+
+.kind-toggle__label {
+  line-height: 1.2;
+}
+
+.contact-detail__heading-label {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.contact-detail__heading--nested {
+  margin-bottom: 0.75rem;
+}
+
+.person-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.person-editor__name-input {
+  width: 100%;
+}
+
+.family-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.family-member {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.family-member:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.family-member__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.family-member__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.family-member__remove {
+  min-height: 2.25rem;
+  padding: 0.375rem 0.75rem;
 }
 
 .contact-detail {

@@ -1,6 +1,8 @@
 pub mod app;
+pub mod components;
 pub mod models;
 pub mod server;
+pub mod views;
 
 #[cfg(feature = "ssr")]
 pub mod state;
